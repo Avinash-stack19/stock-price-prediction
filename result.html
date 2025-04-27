@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ stock_name }} Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        :root {
+            --box-blue: #2196F3;
+            --box-yellow: #b36220;
+            --box-green: #4CAF50;
+            --box-red: #F44336;
+            --box-orange: #FF9800;
+            --box-skyblue: #5113d6;
+            --box-purple: #9C27B0;
+        }
+
+        .lightbox {
+            display: none;
+            position: fixed;
+            z-index: 999;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .lightbox-img {
+            display: block;
+            max-width: 90%;
+            max-height: 90%;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 40px;
+            cursor: pointer;
+        }
+
+        .model-grid img {
+            cursor: zoom-in;
+            transition: transform 0.2s;
+        }
+
+        .model-grid img:hover {
+            transform: scale(1.02);
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            padding: 10px 0;
+        }
+
+        .metric-box {
+            padding: 25px 15px;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+            min-width: 180px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1em;
+            margin: 5px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.16);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        .price-column {
+            text-align: center !important;
+        }
+
+        .metrics-table th {
+            background-color: #090303;
+            position: sticky;
+            top: 0;
+        }
+
+        .metrics-table tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 50vh;
+            margin: 20px 0;
+        }
+
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .download-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .download-btn {
+            background-color: var(--box-purple);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1em;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        @media (max-width: 768px) {
+            .model-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media print {
+            .download-section { display: none; }
+            .section { box-shadow: none; }
+        } 
+
+
+     /* For the prediction table alignment */
+  
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <div class="section">
+        <h1 style="text-align: center; margin: 0">Today’s {{ stock_name }} Stock Data</h1>
+    </div>
+
+   
+
+    <!-- Today's Stock Metrics -->
+    <div class="section">
+        <div class="grid">
+            <div class="metric-box" style="background-color: var(--box-blue)">
+                Open: ${{ today_data.get('Open', 0)|round(2) }}
+            </div>
+            <div class="metric-box" style="background-color: var(--box-yellow)">
+                High: ${{ today_data.get('High', 0)|round(2) }}
+            </div>
+            <div class="metric-box" style="background-color: var(--box-green)">
+                Low: ${{ today_data.get('Low', 0)|round(2) }}
+            </div>
+            <div class="metric-box" style="background-color: var(--box-red)">
+                Close: ${{ today_data.get('Close', 0)|round(2) }}
+            </div>
+            <div class="metric-box" style="background-color: var(--box-skyblue)">
+                Volume: {{ today_data.get('Volume', 0)|int }}
+            </div>
+        </div>
+    </div>
+
+    <!-- 7-Day Prediction Charts -->
+    <div class="section">
+        <h2>7-Day Predicted Prices</h2>
+        <div class="model-grid">
+            <div>
+                <h3>ARIMA</h3>
+                <img src="{{ url_for('static', filename=plot_paths.arima) }}" 
+                     alt="ARIMA Forecast" 
+                     style="width: 100%" 
+                     onclick="openLightbox(this.src)">
+            </div>
+            <div>
+                <h3>LSTM</h3>
+                <img src="{{ url_for('static', filename=plot_paths.lstm) }}" 
+                     alt="LSTM Forecast"
+                     style="width: 100%" 
+                     onclick="openLightbox(this.src)">
+            </div>
+            <div>
+                <h3>Linear Regression</h3>
+                <img src="{{ url_for('static', filename=plot_paths.linear_regression) }}" 
+                     alt="Linear Regression Forecast"
+                     style="width: 100%" 
+                     onclick="openLightbox(this.src)">
+            </div>
+            <div>
+                <h3>Random Forest</h3>
+                <img src="{{ url_for('static', filename=plot_paths.random_forest) }}" 
+                     alt="Random Forest Forecast"
+                     style="width: 100%" 
+                     onclick="openLightbox(this.src)">
+            </div>
+        </div>
+    </div>
+
+    <!-- Tomorrow's Predictions -->
+    <div class="section">
+        <h2>Tomorrow’s Predicted Closing Prices</h2>
+        <div class="grid">
+            <div class="metric-box" style="background-color: var(--box-blue)">
+                ARIMA: ${{ arima_forecast[0]['Predicted_Close'] | round(2) }}
+            </div>
+            <div class="metric-box" style="background-color: var(--box-orange)">
+                LSTM: ${{ lstm_forecast[0]['Predicted_Close'] | round(2) }}
+            </div>
+            <div class="metric-box" style="background-color: var(--box-purple)">
+                Linear Regression: ${{ lr_forecast[0]['Predicted_Close'] | round(2) }}
+            </div>
+            <div class="metric-box" style="background-color: var(--box-green)">
+                Random Forest: ${{ rf_forecast[0]['Predicted_Close'] | round(2) }}
+            </div>
+        </div>
+    </div>
+
+   <!-- Model Evaluation Section -->
+<!-- Model Evaluation Section -->
+<div class="section">
+    <h2>Model Accuracy & Evaluation Metrics</h2>
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px">
+        <div class="chart-container">
+            <canvas id="metricsChart"></canvas>
+        </div>
+        <div>
+            <table class="metrics-table">
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>MAE</th>
+                        <th>MSE</th>
+                        <th>RMSE</th>
+                        <th>Accuracy %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>ARIMA</td>
+                        <td>{{ "%.4f"|format(arima_metrics.mae) }}</td>
+                        <td>{{ "%.4f"|format(arima_metrics.mse) }}</td>
+                        <td>{{ "%.4f"|format(arima_metrics.rmse) }}</td>
+                        <td>{{ "%.2f"|format(arima_metrics.accuracy_pct) }}%</td>
+                    </tr>
+                    <tr>
+                        <td>LSTM</td>
+                        <td>{{ "%.4f"|format(lstm_metrics.mae) }}</td>
+                        <td>{{ "%.4f"|format(lstm_metrics.mse) }}</td>
+                        <td>{{ "%.4f"|format(lstm_metrics.rmse) }}</td>
+                        <td>{{ "%.2f"|format(lstm_metrics.accuracy_pct) }}%</td>
+                    </tr>
+                    <tr>
+                        <td>Linear Regression</td>
+                        <td>{{ "%.4f"|format(lr_metrics.mae) }}</td>
+                        <td>{{ "%.4f"|format(lr_metrics.mse) }}</td>
+                        <td>{{ "%.4f"|format(lr_metrics.rmse) }}</td>
+                        <td>{{ "%.2f"|format(lr_metrics.accuracy_pct) }}%</td>
+                    </tr>
+                    <tr>
+                        <td>Random Forest</td>
+                        <td>{{ "%.4f"|format(rf_metrics.mae) }}</td>
+                        <td>{{ "%.4f"|format(rf_metrics.mse) }}</td>
+                        <td>{{ "%.4f"|format(rf_metrics.rmse) }}</td>
+                        <td>{{ "%.2f"|format(rf_metrics.accuracy_pct) }}%</td>
+                    </tr>                    
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+    <!-- Best Model Forecast -->
+    <div class="section">
+        <h2>Best Model Predictions ({{ best_model_name }})</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th class="price-column">Predicted Close Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prediction in best_forecast %}
+                <tr>
+                    <td>{{ prediction.Date }}</td>
+                    <td class="price-column">${{ prediction.Predicted_Close | round(2) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Recommendation -->
+    <div class="section" style="background-color: {% if recommendation == 'BUY' %}#4CAF50{% elif recommendation == 'SELL' %}#F44336{% else %}#FFEB3B{% endif %}; text-align: center">
+        <h2 style="color: {% if recommendation == 'BUY' %}white{% elif recommendation == 'SELL' %}white{% else %}black{% endif %}">
+            {{ recommendation }} Recommendation
+        </h2>
+        <p style="color: {% if recommendation == 'BUY' %}white{% elif recommendation == 'SELL' %}white{% else %}black{% endif %}">
+            Based on combined model predictions and market analysis
+        </p>
+    </div>
+
+    <!-- Lightbox -->
+    <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+        <span class="close" onclick="closeLightbox()">&times;</span>
+        <img class="lightbox-img" id="zoomed-img" alt="Zoomed chart">
+    </div>
+
+    <script>
+        // Lightbox functionality
+        function openLightbox(imgSrc) {
+            document.getElementById('lightbox').style.display = 'block';
+            document.getElementById('zoomed-img').src = imgSrc;
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').style.display = 'none';
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeLightbox();
+        });
+
+        // Metrics Chart
+        const ctx = document.getElementById('metricsChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['ARIMA', 'LSTM', 'Linear Regression', 'Random Forest'],
+                datasets: [{
+                    label: 'MAE',
+                    data: [{{ arima_metrics.mae }}, {{ lstm_metrics.mae }}, {{ lr_metrics.mae }}, {{ rf_metrics.mae }}],
+                    backgroundColor: '#2196F3'
+                }, {
+                    label: 'MSE',
+                    data: [{{ arima_metrics.mse }}, {{ lstm_metrics.mse }}, {{ lr_metrics.mse }}, {{ rf_metrics.mse }}],
+                    backgroundColor: '#FF9800'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { 
+                        stacked: false,
+                        grid: { display: false }
+                    },
+                    y: { 
+                        beginAtZero: true,
+                        title: { 
+                            display: true, 
+                            text: 'Error Value' 
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { 
+                        position: 'top' 
+                    }
+                }
+            }
+        });
+    </script>
+<!-- In your download section -->
+<div class="download-section">
+    <form action="/download-pdf" method="POST">
+        <input type="hidden" name="selected_stock" value="{{ stock_name }}">
+        <button type="submit" class="download-btn">
+            📄 Download Full Report PDF
+        </button>
+    </form>
+</div>
+</div>
+</body>
+</html>

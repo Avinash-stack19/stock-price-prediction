@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ stock_name }} Analysis Report</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            line-height: 1.5;
+            font-size: 11pt;
+            color: #333;
+        }
+
+        .page-break {
+            page-break-after: always;
+        }
+
+        .content-page {
+            page-break-before: always;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            page-break-after: avoid;
+        }
+
+        /* Metric Box Styles */
+        .metric-container {
+            width: 100%;
+            margin: 15px 0;
+            page-break-inside: avoid;
+        }
+
+        .metric-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: space-between;
+        }
+
+        .metric-box {
+            flex: 1 1 18%;
+            min-width: 150px;
+            padding: 12px 8px;
+            border-radius: 5px;
+            color: #ffffff !important;
+            text-align: center;
+            font-size: 13px;
+            font-weight: bold;
+            -webkit-print-color-adjust: exact;
+            page-break-inside: avoid;
+            margin-bottom: 8px;
+            box-sizing: border-box;
+        }
+
+        .metric-blue { background-color: #2196F3 !important; }
+        .metric-yellow { background-color: #FFA726 !important; }
+        .metric-green { background-color: #4CAF50 !important; }
+        .metric-red { background-color: #EF5350 !important; }
+        .metric-purple { background-color: #5C6BC0 !important; }
+
+        /* Chart Styles */
+        .chart-group {
+            page-break-inside: avoid;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            width: 100%;
+            margin: 15px 0;
+            page-break-inside: avoid;
+            min-height: 400px;
+        }
+
+        .chart-img {
+            width: 100%;
+            max-height: 500px;
+            object-fit: contain;
+            page-break-inside: avoid;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        /* Recommendation Styles */
+        .recommendation {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 30px 0;
+            page-break-inside: avoid;
+        }
+
+        .footer {
+            text-align: center;
+            color: #666;
+            font-size: 0.8em;
+            margin-top: 40px;
+            page-break-before: always;
+        }
+    </style>
+</head>
+<body>
+    <!-- First Page -->
+    <div class="first-page">
+        <!-- Header -->
+        <div class="header">
+            <h1 style="margin: 0 0 10px 0;">{{ stock_name }} Stock Analysis Report</h1>
+            <p style="margin: 0; font-size: 0.9em;">
+                Generated on {% if today_data.Date is string %}
+                    {{ today_data.Date }}
+                {% else %}
+                    {{ today_data.Date.strftime('%Y-%m-%d %H:%M') }}
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Metrics -->
+        <div class="metric-container">
+            <div class="metric-row">
+                <div class="metric-box metric-blue">
+                    Open: ${{ "%.2f"|format(today_data.get('Open', 0)) }}
+                </div>
+                <div class="metric-box metric-yellow">
+                    High: ${{ "%.2f"|format(today_data.get('High', 0)) }}
+                </div>
+                <div class="metric-box metric-green">
+                    Low: ${{ "%.2f"|format(today_data.get('Low', 0)) }}
+                </div>
+                <div class="metric-box metric-red">
+                    Close: ${{ "%.2f"|format(today_data.get('Close', 0)) }}
+                </div>
+                <div class="metric-box metric-purple">
+                    Volume: {{ today_data.get('Volume', 0)|int }}
+                </div>
+            </div>
+        </div>
+
+        <!-- ARIMA Forecast -->
+        <div class="chart-container page-break">
+            <h3 style="margin: 0 0 10px 0; font-size: 1.1em;">ARIMA Forecast</h3>
+            <img src="{{ plot_paths.arima }}" class="chart-img" alt="ARIMA Forecast Chart">
+        </div>
+    </div>
+
+    <!-- Second Page -->
+    <div class="content-page">
+        <!-- LSTM Forecast -->
+        <div class="chart-container">
+            <h3 style="margin: 20px 0 10px 0; font-size: 1.1em;">LSTM Forecast</h3>
+            <img src="{{ plot_paths.lstm }}" class="chart-img" alt="LSTM Forecast Chart">
+        </div>
+
+        <!-- Linear Regression Forecast -->
+        <div class="chart-container page-break">
+            <h3 style="margin: 20px 0 10px 0; font-size: 1.1em;">Linear Regression Forecast</h3>
+            <img src="{{ plot_paths.linear_regression }}" class="chart-img" alt="Linear Regression Forecast Chart">
+        </div>
+    </div>
+
+    <!-- Third Page -->
+    <div class="content-page">
+            <h3 style="margin: 20px 0 10px 0; font-size: 1.1em;">Random Forest Forecast</h3>
+            <img src="{{ plot_paths.random_forest }}" class="chart-img" alt="Random Forest Forecast Chart">
+        </div>
+    </div>
+</div>
+        <!-- Model Performance -->
+        <div class="section">
+            <h2 style="margin-bottom: 15px;">Model Performance Metrics</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>MAE</th>
+                        <th>MSE</th>
+                        <th>RMSE</th>
+                        <th>R²</th>
+                        <th>Accuracy %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>ARIMA</td>
+                        <td>{{ "%.4f"|format(arima_metrics.mae) }}</td>
+                        <td>{{ "%.4f"|format(arima_metrics.mse) }}</td>
+                        <td>{{ "%.4f"|format(arima_metrics.rmse) }}</td>
+                        <td>{{ "%.4f"|format(arima_metrics.r2) }}</td>
+                        <td>{{ "%.2f"|format(arima_metrics.accuracy_pct) }}%</td>
+                    </tr>
+                    <tr>
+                        <td>LSTM</td>
+                        <td>{{ "%.4f"|format(lstm_metrics.mae) }}</td>
+                        <td>{{ "%.4f"|format(lstm_metrics.mse) }}</td>
+                        <td>{{ "%.4f"|format(lstm_metrics.rmse) }}</td>
+                        <td>{{ "%.4f"|format(lstm_metrics.r2) }}</td>
+                        <td>{{ "%.2f"|format(lstm_metrics.accuracy_pct) }}%</td>
+                    </tr>
+                    <tr>
+                        <td>Linear Regression</td>
+                        <td>{{ "%.4f"|format(lr_metrics.mae) }}</td>
+                        <td>{{ "%.4f"|format(lr_metrics.mse) }}</td>
+                        <td>{{ "%.4f"|format(lr_metrics.rmse) }}</td>
+                        <td>{{ "%.4f"|format(lr_metrics.r2) }}</td>
+                        <td>{{ "%.2f"|format(lr_metrics.accuracy_pct) }}%</td>
+                    </tr>
+                    <tr>
+                        <td>Random Forest</td>
+                        <td>{{ "%.4f"|format(rf_metrics.mae) }}</td>
+                        <td>{{ "%.4f"|format(rf_metrics.mse) }}</td>
+                        <td>{{ "%.4f"|format(rf_metrics.rmse) }}</td>
+                        <td>{{ "%.4f"|format(rf_metrics.r2) }}</td>
+                        <td>{{ "%.2f"|format(rf_metrics.accuracy_pct) }}%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Best Model Forecast -->
+        <div class="section">
+            <h2 style="margin-bottom: 15px;">Best Model Predictions ({{ best_model_name }})</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 60%">Date</th>
+                        <th style="width: 40%">Predicted Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prediction in best_forecast %}
+                    <tr>
+                        <td>{{ prediction.Date }}</td>
+                        <td>${{ prediction.Predicted_Close|round(2) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Recommendation -->
+        <div class="recommendation" style="background-color: {% if recommendation == 'BUY' %}#4CAF50{% elif recommendation == 'SELL' %}#F44336{% else %}#FFEB3B{% endif %};">
+            <h2 style="margin: 0 0 10px 0; color: {% if recommendation == 'HOLD' %}#333{% else %}white{% endif %};">
+                Final Recommendation: {{ recommendation }}
+            </h2>
+            <p style="margin: 0; font-size: 0.95em; color: {% if recommendation == 'HOLD' %}#333{% else %}white{% endif %};">
+                Based on analysis of {{ best_model_name }} predictions
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Generated by Stock Prediction System - {{ today_data.Date.strftime('%Y-%m-%d') }}</p>
+            <p>This report is for informational purposes only and should not be considered financial advice</p>
+        </div>
+    </div>
+</body>
+</html>

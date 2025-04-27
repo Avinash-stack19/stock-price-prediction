@@ -1,0 +1,52 @@
+
+
+.metrics-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2rem 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    background: #ffffff;
+}
+
+
+.metrics-table thead {
+    background: #2c3e50;  /* Dark blue background */
+    color: #ffffff;       /* White text */
+}
+
+/* Header Cells */
+.metrics-table th {
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #ffffff !important;  /* Force white text */
+    border-bottom: 2px solid #1a252f;
+}
+
+/* Rest of your existing table styles... */
+
+.metrics-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Number Formatting */
+.metrics-table td:not(:first-child) {
+    font-family: 'Courier New', monospace;
+    text-align: right;
+    font-weight: 500;
+}
+
+/* Zebra Striping */
+.metrics-table tbody tr:nth-child(even) td {
+    background-color: #f8f9fa;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .metrics-table {
+        display: block;
+        overflow-x: auto;
+    }
+}

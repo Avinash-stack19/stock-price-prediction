@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stock Prediction</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <h1>PREDICT THE FUTURE</h1>
+  </section>
+
+  <!-- Stock Input Form -->
+  <section class="input-section">
+    <img src="{{ url_for('static', filename='tile7.png') }}" alt="Stock Chart" class="chart-image"/>
+    <div class="input-box">
+      <h2>PLEASE SELECT A STOCK SYMBOL</h2>
+      <form action="/predict" method="post">
+        <select name="company" required>
+          {% for file in csv_files %}
+            <option value="{{ file }}">{{ file.replace('.csv', '') }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit">PREDICT THE FUTURE</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Footer Section -->
+  <footer>
+    <div class="footer-container">
+      <div class="footer-left">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="AKP Logo" class="logo"/>
+        <p>Akp was started with a common goal of serving the finance community while they make transitions.
+          All our team members bring their unique expertise and experience of stock market which they would like to pass on to future investors.
+        </p>
+      </div>
+      <div class="footer-middle">
+        <h3>CONTACT US</h3>
+        <p>
+          AKP, Office,Amity University Kolkata<br>
+          <br>
+          Kolkata, India
+        </p>
+        <p>Email: AK2145363@gmail.com<br>Phone: +91 8637830159</p>
+      </div>
+      <div class="footer-right">
+        <h3>LOCATION</h3>
+        <iframe src="https://www.google.com/maps?q=Amity+University+Kolkata&output=embed"
+                width="100%" height="150" frameborder="0" style="border:0;" allowfullscreen></iframe>
+      </div>
+    </div>
+
+   
+  </footer>
+
+</body>
+</html>
